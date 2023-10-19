@@ -19,9 +19,10 @@ export const adminTokenValidation =async(email,Authorization)=>{
     try {
         const token = Authorization.split(" ")[1];
         const decode=jwt.verify(token, JWT_SECRET)
-        if(decode.adminEmail === email) return true
+        console.log(decode);
+        if(decode.email === email) return true
         return false
     } catch (error) {
-        return error
+        return false
     }
 }

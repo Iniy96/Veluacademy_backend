@@ -11,7 +11,7 @@ const REGISTRATION_PASSWD = process.env.ADMIN_AUTH_PASSWORD
 
 
 export const registration = async (req, res) => {
-    const {adminName, adminEmail, adminPassword, registrationPassword } = req.body
+    const { adminName, adminEmail, adminPassword, registrationPassword } = req.body
     try {
         if (registrationPassword != REGISTRATION_PASSWD) return res.status(202).json({ msg: "Registration Password Not Matched" })
 
@@ -19,13 +19,13 @@ export const registration = async (req, res) => {
 
         if (isAdmin) return res.status(202).json({ msg: "Email already present" })
 
-        const hashedPassword = await bcrypt.hash(adminPassword, 10) 
+        const hashedPassword = await bcrypt.hash(adminPassword, 10)
 
         // save data into db
         const [result] = await pool.query(`
                                     INSERT INTO admin ( admin_name, Email, password)
                                     VALUES (?, ?, ?)
-                                `, [adminName,adminEmail,hashedPassword]);
+                                `, [adminName, adminEmail, hashedPassword]);
         const id = result.insertId
         res.json({ msg: "successfully added ", id })
 
@@ -35,8 +35,8 @@ export const registration = async (req, res) => {
 
 }
 
-export const login = async(req,res)=>{
-    const {adminEmail,adminPassword} = req.body
+export const login = async (req, res) => {
+    const { adminEmail, adminPassword } = req.body
     try {
         // check email is already registered in db 
         const isEmailInDB = await pool.query(`SELECT * FROM admin
@@ -50,11 +50,11 @@ export const login = async(req,res)=>{
 
         // create jwt token
         const token = jwt.sign({
-            adminEmail
+            email:adminEmail
         }, JWT_SECRET, { expiresIn: "10m" });
-       
+
         res.json({
-            adminEmail,
+            email:adminEmail,
             msg: "Login Successful...!",
             token
         });
@@ -64,8 +64,8 @@ export const login = async(req,res)=>{
     }
 }
 
-export const resetPassword = async(req,res)=>{
-    const {adminEmail,adminPassword,registrationPassword } =req.body
+export const resetPassword = async (req, res) => {
+    const { adminEmail, adminPassword, registrationPassword } = req.body
     try {
         if (registrationPassword != REGISTRATION_PASSWD) return res.status(202).json({ msg: "Registration Password Not Matched" })
 
@@ -73,41 +73,41 @@ export const resetPassword = async(req,res)=>{
 
         if (!isAdmin) return res.status(202).json({ msg: "Email Not registered as admin" })
 
-        const hashedPassword = await bcrypt.hash(adminPassword, 10) 
+        const hashedPassword = await bcrypt.hash(adminPassword, 10)
 
         const updatedPassword = await pool.query(`UPDATE admin
        SET password= ? WHERE email = ? `, [hashedPassword, adminEmail])
 
         // const id = result.insertId
-        res.json({msg:"successfully Updated",updatedPassword})
+        res.json({ msg: "successfully Updated", updatedPassword })
 
     } catch (error) {
         res.json(error)
     }
- }
+}
 
 
-export const tokenvalidation =async(req,res)=>{
+export const tokenvalidation = async (req, res) => {
+    
     try {
-        const{adminemail,authorization} = req.headers
-        const IsVadlidAdmin =await adminTokenValidation(adminemail,authorization)
-       
-        if (!IsVadlidAdmin) return res.status(202).json({msg:"Failure"})
+        const { email, authorization } = req.headers
+        const IsVadlidAdmin = await adminTokenValidation(email, authorization)
 
+        console.log("Valid admin",IsVadlidAdmin);
+        if (!IsVadlidAdmin) return res.status(202).json({ msg: "Failure" })
+        console.log("Valid admin");
         // create jwt token
         const Newtoken = jwt.sign({
-            adminemail
+            email
         }, JWT_SECRET, { expiresIn: "10m" });
 
         res.json({
-            adminemail,
+            email,
             msg: "Login Successful...!",
             Newtoken
         });
-
-        
     } catch (error) {
         res.status(500).json(error)
     }
-   
+
 }
